@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isGsuUser() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower().matches('.*@student[.]gsu[.]edu');
+    }
+
+    function isAdmin() {
+      return isGsuUser()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /users/{uid} {
+      allow read: if isGsuUser() && (request.auth.uid == uid || isAdmin());
+      allow create: if isGsuUser() && request.auth.uid == uid
+        && request.resource.data.role in ['student', 'business', 'organization'];
+      allow update: if isGsuUser() && request.auth.uid == uid
+        && request.resource.data.role == resource.data.role;
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
