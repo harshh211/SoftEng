@@ -1,0 +1,27 @@
+{
+  "name": "softeng",
+  "version": "1.0.0",
+  "description": "Your student community, in one place. Bento is a Georgia State University web app for discovering student businesses, clubs, and events. It is built by Team Optic for CSC 4350 Software Engineering.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test test/config.test.mjs",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-bento \"node --test test/rules.test.mjs\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harshh211/SoftEng.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/harshh211/SoftEng/issues"
+  },
+  "homepage": "https://github.com/harshh211/SoftEng#readme",
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "firebase": "^13.1.0",
+    "firebase-tools": "^15.34.2"
+  }
+}
