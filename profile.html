@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Profile and settings · Bento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/header.css">
+  <link rel="stylesheet" href="css/profile.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main id="main" class="page profile">
+    <h1>Profile and settings</h1>
+
+    <p id="profile-loading" class="muted">Loading your profile…</p>
+
+    <div id="profile-content" class="profile__grid" hidden>
+      <section class="panel profile__identity" aria-labelledby="identity-heading">
+        <div class="profile__avatar" id="profile-avatar" aria-hidden="true">?</div>
+        <div>
+          <h2 id="identity-heading" class="profile__name" data-field="name"></h2>
+          <p class="muted profile__email" data-field="email"></p>
+          <span class="role-tag" data-field="role"></span>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="edit-heading">
+        <h2 id="edit-heading">Your details</h2>
+        <form id="profile-form" novalidate>
+          <div class="field">
+            <label for="name-input">Name</label>
+            <input id="name-input" name="name" type="text" autocomplete="name"
+                   maxlength="50" required aria-describedby="name-hint name-error">
+            <p id="name-hint" class="field__hint">This is how other students and businesses see you.</p>
+            <p id="name-error" class="field__error" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="email-input">GSU email</label>
+            <input id="email-input" type="email" readonly aria-describedby="email-hint">
+            <p id="email-hint" class="field__hint">Your verified university email can’t be changed.</p>
+          </div>
+
+          <button class="btn" type="submit" id="save-button">Save changes</button>
+          <p id="save-status" class="status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section class="panel" aria-labelledby="account-heading">
+        <h2 id="account-heading">Account</h2>
+        <p class="muted">Signing out ends your session on this device.</p>
+        <button class="btn btn--quiet" type="button" id="sign-out-button">Sign out</button>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="js/components/header.js"></script>
+  <script type="module" src="js/profile.js"></script>
+</body>
+</html>
