@@ -1,30 +1,227 @@
 rules_version = '2';
+
+// Bento Firestore security rules.
+// Covers NFR-6.2 (only verified GSU emails) and NFR-6.3 (owners edit only their own data).
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isGsuUser() {
-      return request.auth != null
-        && request.auth.token.email_verified == true
-        && request.auth.token.email.lower().matches('.*@student[.]gsu[.]edu');
+    // ---------- Helpers ----------
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Keep this list in sync with ALLOWED_EMAIL_DOMAINS in public/js/firebase-config.js.
+    function isUniversityEmail() {
+      return request.auth.token.email.lower().matches('.*@(student[.])?gsu[.]edu$');
+    }
+
+    // Signed in, GSU email, and the email has been verified.
+    function isVerifiedStudent() {
+      return signedIn() && isUniversityEmail() && request.auth.token.email_verified == true;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
     function isAdmin() {
-      return isGsuUser()
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isVerifiedStudent() && userDoc().role == 'admin';
     }
 
-    match /users/{uid} {
-      allow read: if isGsuUser() && (request.auth.uid == uid || isAdmin());
-      allow create: if isGsuUser() && request.auth.uid == uid
-        && request.resource.data.role in ['student', 'business', 'organization'];
-      allow update: if isGsuUser() && request.auth.uid == uid
-        && request.resource.data.role == resource.data.role;
+    function unchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // Only these fields changed (and nothing else).
+    function onlyChanged(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
+    // Roles a user can give themselves. "admin" can only be granted by an admin.
+    function selfRoles() {
+      return ['student', 'owner', 'organization'];
+    }
+
+    // Optional string field: missing, or a string no longer than max.
+    function optString(d, field, max) {
+      return d.get(field, '') is string && d.get(field, '').size() <= max;
+    }
+
+    // Optional field that may also be null.
+    function optStringOrNull(d, field, max) {
+      return d.get(field, null) == null || optString(d, field, max);
+    }
+
+    function categoryExists(categoryId) {
+      return categoryId is string
+        && exists(/databases/$(database)/documents/categories/$(categoryId));
+    }
+
+    // ---------- USER ----------
+    match /users/{userId} {
+      // Any verified user can view profiles (needed for reviews, owners, etc.).
+      allow read: if isVerifiedStudent() || (signedIn() && request.auth.uid == userId);
+
+      // Created at signup, before the email is verified. Role is forced to "student".
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && isUniversityEmail()
+        && request.resource.data.gsu_email == request.auth.token.email.lower()
+        && request.resource.data.role == 'student'
+        && request.resource.data.is_verified == false
+        && request.resource.data.keys().hasOnly(
+             ['name', 'gsu_email', 'role', 'is_verified', 'profile_photo_url', 'created_at']);
+
+      // Users edit their own profile but cannot change email or created_at.
+      // They may switch between student / owner / organization (the app does this when they
+      // create a business or club), but never to or from admin.
+      // is_verified may only become true once Firebase says the email is verified.
+      allow update: if signedIn()
+        && request.auth.uid == userId
+        && unchanged(['gsu_email', 'created_at'])
+        && (request.resource.data.role == resource.data.role
+            || (resource.data.role in selfRoles() && request.resource.data.role in selfRoles()))
+        && (request.resource.data.is_verified == resource.data.is_verified
+            || (request.resource.data.is_verified == true
+                && request.auth.token.email_verified == true));
+
+      // Admins manage roles and accounts (use case: "Manage user roles and accounts").
       allow update: if isAdmin();
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
 
-    match /{document=**} {
-      allow read, write: if false;
+    // ---------- CATEGORY ----------
+    match /categories/{categoryId} {
+      allow read: if isVerifiedStudent();
+      allow write: if isAdmin();
     }
+
+    // ---------- BUSINESS (businesses and organizations, FR-2) ----------
+    // See docs/data-model.md for the fields.
+
+    function isValidBusiness(d) {
+      return d.keys().hasOnly(['owner_id', 'type', 'category_id', 'name', 'name_lower',
+                               'description', 'location', 'contact_info', 'logo_url',
+                               'status', 'created_at', 'updated_at'])
+        && d.keys().hasAll(['owner_id', 'type', 'category_id', 'name', 'status', 'created_at'])
+        && d.type in ['business', 'organization']
+        && d.status in ['active', 'suspended']
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 80
+        && (d.get('name_lower', null) == null || d.name_lower == d.name.lower())
+        && optString(d, 'description', 2000)
+        && optString(d, 'location', 200)
+        && optString(d, 'contact_info', 200)
+        && optStringOrNull(d, 'logo_url', 1000)
+        && categoryExists(d.category_id);
+    }
+
+    function businessAt(businessId) {
+      return get(/databases/$(database)/documents/businesses/$(businessId)).data;
+    }
+
+    match /businesses/{businessId} {
+      // Active profiles are public to verified students; suspended ones only to owner and admins.
+      allow read: if isVerifiedStudent()
+        && (resource.data.status == 'active'
+            || resource.data.owner_id == request.auth.uid
+            || isAdmin());
+
+      allow create: if isVerifiedStudent()
+        && request.resource.data.owner_id == request.auth.uid
+        && request.resource.data.status == 'active'
+        && request.resource.data.created_at == request.time
+        && isValidBusiness(request.resource.data);
+
+      // Owner edits their profile (FR-2.2, FR-2.3) but can't change owner, status or created_at.
+      allow update: if isVerifiedStudent()
+        && resource.data.owner_id == request.auth.uid
+        && unchanged(['owner_id', 'status', 'created_at'])
+        && isValidBusiness(request.resource.data);
+
+      // Admin suspends or reactivates a business.
+      allow update: if isAdmin()
+        && onlyChanged(['status', 'updated_at'])
+        && isValidBusiness(request.resource.data);
+
+      allow delete: if isVerifiedStudent()
+        && (resource.data.owner_id == request.auth.uid || isAdmin());
+    }
+
+    // ---------- LISTING (products, services and events, FR-3, FR-7) ----------
+
+    function isValidListing(d) {
+      return d.keys().hasOnly(['business_id', 'owner_id', 'business_type', 'category_id', 'type',
+                               'title', 'title_lower', 'keywords', 'description', 'price',
+                               'availability', 'location', 'photos', 'event_start', 'event_end',
+                               'rating_sum', 'rating_count', 'rsvp_count',
+                               'status', 'created_at', 'updated_at'])
+        && d.keys().hasAll(['business_id', 'owner_id', 'business_type', 'category_id', 'type',
+                            'title', 'title_lower', 'price', 'status', 'created_at', 'updated_at'])
+        && d.type in ['product', 'service', 'event']
+        && d.status in ['active', 'hidden', 'removed']
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 100
+        && d.title_lower == d.title.lower()
+        && d.get('keywords', []) is list && d.get('keywords', []).size() <= 30
+        && optString(d, 'description', 4000)
+        && d.price is number && d.price >= 0 && d.price <= 100000
+        && optString(d, 'availability', 500)
+        && optString(d, 'location', 200)
+        && d.get('photos', []) is list && d.get('photos', []).size() <= 10
+        && isValidEventTimes(d)
+        && d.updated_at == request.time;
+    }
+
+    // Events need a start time; an end time, if given, must be after it.
+    function isValidEventTimes(d) {
+      return d.type != 'event'
+        || (d.get('event_start', null) is timestamp
+            && (d.get('event_end', null) == null
+                || (d.event_end is timestamp && d.event_end >= d.event_start)));
+    }
+
+    match /listings/{listingId} {
+      // Queries must include where("status", "==", "active") unless they filter by owner_id.
+      allow read: if isVerifiedStudent()
+        && (resource.data.status == 'active'
+            || resource.data.owner_id == request.auth.uid
+            || isAdmin());
+
+      // Only the owner of an active business can add listings to it (FR-3.1).
+      // Only organizations can post events (FR-7.1).
+      allow create: if isVerifiedStudent()
+        && request.resource.data.owner_id == request.auth.uid
+        && request.resource.data.status in ['active', 'hidden']
+        && request.resource.data.created_at == request.time
+        && isValidListing(request.resource.data)
+        && businessAt(request.resource.data.business_id).owner_id == request.auth.uid
+        && businessAt(request.resource.data.business_id).status == 'active'
+        && request.resource.data.business_type == businessAt(request.resource.data.business_id).type
+        && (request.resource.data.type != 'event' || request.resource.data.business_type == 'organization')
+        && categoryExists(request.resource.data.category_id);
+
+      // Owner edits or hides their listing (FR-3.4), unless an admin removed it.
+      allow update: if isVerifiedStudent()
+        && resource.data.owner_id == request.auth.uid
+        && resource.data.status != 'removed'
+        && request.resource.data.status in ['active', 'hidden']
+        && unchanged(['business_id', 'owner_id', 'business_type', 'created_at'])
+        && (request.resource.data.type != 'event' || request.resource.data.business_type == 'organization')
+        && isValidListing(request.resource.data)
+        && categoryExists(request.resource.data.category_id);
+
+      // Admin removes (or restores) a listing for a policy violation (FR-8.4).
+      allow update: if isAdmin()
+        && onlyChanged(['status', 'updated_at'])
+        && isValidListing(request.resource.data);
+
+      allow delete: if isVerifiedStudent()
+        && (resource.data.owner_id == request.auth.uid || isAdmin());
+    }
+
+    // Everything else is closed until its rules are written.
+    // Add a match block per collection (reviews, favorites, reports, ...) as you build it.
+    // docs/data-model.md lists the fields for each one.
   }
 }
