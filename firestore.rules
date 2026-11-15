@@ -220,8 +220,70 @@ service cloud.firestore {
         && (resource.data.owner_id == request.auth.uid || isAdmin());
     }
 
+    // ---------- FAVORITE (FR-6) ----------
+    // Doc ID is {user_id}_{listing_id}, so a user can't save the same listing twice.
+
+    function listingAt(listingId) {
+      return get(/databases/$(database)/documents/listings/$(listingId)).data;
+    }
+
+    match /favorites/{favoriteId} {
+      // Only the person who saved it can see it. (Queries must filter by user_id.)
+      allow read: if isVerifiedStudent() && resource.data.user_id == request.auth.uid;
+
+      allow create: if isVerifiedStudent()
+        && request.resource.data.keys().hasOnly(['user_id', 'listing_id', 'created_at'])
+        && request.resource.data.keys().hasAll(['user_id', 'listing_id', 'created_at'])
+        && request.resource.data.user_id == request.auth.uid
+        && request.resource.data.listing_id is string
+        && favoriteId == request.resource.data.user_id + '_' + request.resource.data.listing_id
+        && request.resource.data.created_at == request.time
+        && exists(/databases/$(database)/documents/listings/$(request.resource.data.listing_id));
+
+      // No updates: a favorite is either there or it isn't.
+      allow delete: if isVerifiedStudent() && resource.data.user_id == request.auth.uid;
+    }
+
+    // ---------- REVIEW (FR-5) ----------
+    // Doc ID is {user_id}_{listing_id}: one review per person per listing.
+    // The listing page works out the average rating from the reviews query for now.
+    // (rating_sum / rating_count on the listing are for later.)
+
+    function isValidReview(d) {
+      return d.keys().hasOnly(['user_id', 'listing_id', 'business_id', 'rating', 'comment',
+                               'created_at', 'updated_at'])
+        && d.keys().hasAll(['user_id', 'listing_id', 'business_id', 'rating', 'created_at'])
+        && d.rating is int && d.rating >= 1 && d.rating <= 5
+        && optString(d, 'comment', 2000);
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if isVerifiedStudent();
+
+      // Reviews are for active listings, and you can't review your own.
+      allow create: if isVerifiedStudent()
+        && isValidReview(request.resource.data)
+        && !request.resource.data.keys().hasAny(['updated_at'])
+        && request.resource.data.user_id == request.auth.uid
+        && reviewId == request.resource.data.user_id + '_' + request.resource.data.listing_id
+        && request.resource.data.created_at == request.time
+        && listingAt(request.resource.data.listing_id).status == 'active'
+        && listingAt(request.resource.data.listing_id).owner_id != request.auth.uid
+        && listingAt(request.resource.data.listing_id).business_id == request.resource.data.business_id;
+
+      // The author can change the rating and comment, and nothing else.
+      allow update: if isVerifiedStudent()
+        && resource.data.user_id == request.auth.uid
+        && onlyChanged(['rating', 'comment', 'updated_at'])
+        && isValidReview(request.resource.data)
+        && request.resource.data.updated_at == request.time;
+
+      allow delete: if isVerifiedStudent()
+        && (resource.data.user_id == request.auth.uid || isAdmin());
+    }
+
     // Everything else is closed until its rules are written.
-    // Add a match block per collection (reviews, favorites, reports, ...) as you build it.
+    // Add a match block per collection (reports, rsvps, ...) as you build it.
     // docs/data-model.md lists the fields for each one.
   }
 }
