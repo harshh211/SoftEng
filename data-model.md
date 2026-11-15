@@ -1,6 +1,6 @@
 # Bento data model (Firestore)
 
-Firestore collections for Bento, based on the ERD (`BentoERD.drawio.pdf`) plus the collections
+Firestore collections for Bento, based on the ERD (`docs/BentoERD.pdf`, editable source `docs/BentoERD.drawio`) plus the collections
 needed by requirements and use cases the ERD doesn't cover.
 
 ✅ security rules written · ⬜ no rules yet. A collection without rules is locked: nobody can
@@ -144,6 +144,9 @@ Products, services and events (FR-3, FR-7).
 | `status` | string | ✔ | `active` · `hidden` · `removed` |
 | `created_at` | timestamp | ✔ | |
 | `updated_at` | timestamp | ✔ | Set on every write |
+| `rating_sum` | number | | **Later.** Sum of review ratings, see Reviews |
+| `rating_count` | number | | **Later.** Number of reviews |
+| `rsvp_count` | number | | **Later.** Number of RSVPs on an event |
 
 Who can do what:
 
@@ -176,7 +179,7 @@ This matches whole words only: "braids" finds "Box braids", "brai" doesn't.
 **Uploading photos.** Create the listing first so it has an ID. Upload photos to
 `users/{uid}/listings/{listing_id}/{file}`, then save the download URLs into `photos`.
 
-### `reviews/{review_id}` ⬜
+### `reviews/{review_id}` ✅
 
 Doc ID `{user_id}_{listing_id}`, so each user gets one review per listing (FR-5).
 
@@ -186,16 +189,29 @@ Doc ID `{user_id}_{listing_id}`, so each user gets one review per listing (FR-5)
 | `listing_id` | string | |
 | `business_id` | string | Copy, for the business owner's "view reviews" page |
 | `rating` | int | 1–5 |
-| `comment` | string | ≤ 2000 |
-| `created_at` | timestamp | |
+| `comment` | string | Optional, ≤ 2000 |
+| `created_at` | timestamp | Set on create, can't change |
+| `updated_at` | timestamp | Only on an edit |
 
-Average rating (FR-5.2): store `rating_sum` and `rating_count` on the listing and update them in a
-transaction whenever a review is added. The page shows `rating_sum / rating_count`.
+Who can do what:
 
-### `favorites/{favorite_id}` ⬜
+| Action | Who |
+|---|---|
+| Read | Any verified student |
+| Create | A verified student, with `user_id` set to themselves and the ID `{user_id}_{listing_id}`. The listing must be `active`, and its owner can't review it. `business_id` must match the listing's business |
+| Edit | The author, only `rating`, `comment` and `updated_at` |
+| Delete | The author or an admin |
+
+**Later:** average rating (FR-5.2). Store `rating_sum` and `rating_count` on the listing and update
+them in a transaction whenever a review is added. The page shows `rating_sum / rating_count`.
+
+### `favorites/{favorite_id}` ✅
 
 Doc ID `{user_id}_{listing_id}` (FR-6). Fields: `user_id`, `listing_id`, `created_at`.
 To list a user's favorites, query `where("user_id", "==", uid)`.
+
+Rules: a verified student can save an existing listing as themselves, and can read and remove only
+their own favorites. A favorite can't be edited, only removed.
 
 ### `reports/{report_id}` ⬜
 
@@ -303,6 +319,8 @@ the user's three most common categories that they haven't favorited.
 | `status == active`, `price` range | Price filter |
 | `owner_id ==`, newest first | "My listings" |
 | `status == active`, `business_id ==`, newest first | A business's public profile page |
+| `listing_id ==` (reviews), newest first | A listing's reviews |
+| `user_id ==` (favorites), newest first | A user's favorites |
 
 If a query fails with "The query requires an index", the error message includes a link that
 creates the index. Click it, then copy the new index into `firestore.indexes.json` so it's in Git.
