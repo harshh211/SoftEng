@@ -74,6 +74,27 @@ function newListing(overrides = {}) {
   };
 }
 
+function newFavorite(user, listingId = "activeListing", overrides = {}) {
+  return { user_id: user.uid, listing_id: listingId, created_at: serverTimestamp(), ...overrides };
+}
+
+function newReview(user, overrides = {}) {
+  return {
+    user_id: user.uid,
+    listing_id: "activeListing",
+    business_id: "aliceBiz",
+    rating: 5,
+    comment: "Great braids, would book again!",
+    created_at: serverTimestamp(),
+    ...overrides,
+  };
+}
+
+// Writes a favorite or review directly, with rules turned off, so a test can start from one.
+async function seed(path, id, data) {
+  await testEnv.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), path, id), data));
+}
+
 // ---------- Setup ----------
 before(async () => {
   testEnv = await initializeTestEnvironment({
@@ -328,10 +349,192 @@ describe("listings", () => {
   });
 });
 
+// ---------- favorites ----------
+describe("favorites", () => {
+  test("a verified student can save a listing", async () => {
+    await assertSucceeds(setDoc(doc(as(BOB), "favorites", "bob_activeListing"), newFavorite(BOB)));
+  });
+
+  test("the document ID must be user_id + _ + listing_id", async () => {
+    await assertFails(setDoc(doc(as(BOB), "favorites", "anything"), newFavorite(BOB)));
+    await assertFails(setDoc(doc(as(BOB), "favorites", "bob_hiddenListing"), newFavorite(BOB)));
+  });
+
+  test("cannot save a favorite for someone else", async () => {
+    await assertFails(setDoc(doc(as(BOB), "favorites", "alice_activeListing"), newFavorite(ALICE)));
+  });
+
+  test("cannot save a listing that doesn't exist", async () => {
+    await assertFails(setDoc(doc(as(BOB), "favorites", "bob_nope"), newFavorite(BOB, "nope")));
+  });
+
+  test("only user_id, listing_id and created_at are allowed", async () => {
+    await assertFails(setDoc(doc(as(BOB), "favorites", "bob_activeListing"),
+      newFavorite(BOB, "activeListing", { note: "mine" })));
+  });
+
+  test("created_at must be the server time", async () => {
+    await assertFails(setDoc(doc(as(BOB), "favorites", "bob_activeListing"),
+      newFavorite(BOB, "activeListing", { created_at: Timestamp.fromDate(new Date("2020-01-01")) })));
+  });
+
+  test("unverified and non-GSU accounts cannot save favorites", async () => {
+    await assertFails(setDoc(doc(as(BOB, { email_verified: false }), "favorites", "bob_activeListing"), newFavorite(BOB)));
+    const outsider = { uid: "eve", email: "eve@gmail.com" };
+    await assertFails(setDoc(doc(as(outsider), "favorites", "eve_activeListing"), newFavorite(outsider)));
+  });
+
+  test("you can only read your own favorites", async () => {
+    await seed("favorites", "bob_activeListing", newFavorite(BOB));
+    await assertSucceeds(getDoc(doc(as(BOB), "favorites", "bob_activeListing")));
+    await assertFails(getDoc(doc(as(ALICE), "favorites", "bob_activeListing")));
+    await assertFails(getDoc(doc(as(ADMIN), "favorites", "bob_activeListing")));
+  });
+
+  test("a user can list their own favorites with a user_id query", async () => {
+    await seed("favorites", "bob_activeListing", newFavorite(BOB));
+    await assertSucceeds(getDocs(query(collection(as(BOB), "favorites"), where("user_id", "==", BOB.uid))));
+    await assertFails(getDocs(query(collection(as(BOB), "favorites"), where("user_id", "==", ALICE.uid))));
+  });
+
+  test("favorites cannot be edited", async () => {
+    await seed("favorites", "bob_activeListing", newFavorite(BOB));
+    await assertFails(updateDoc(doc(as(BOB), "favorites", "bob_activeListing"), { created_at: serverTimestamp() }));
+  });
+
+  test("only the owner of the favorite can remove it", async () => {
+    await seed("favorites", "bob_activeListing", newFavorite(BOB));
+    await assertFails(deleteDoc(doc(as(ALICE), "favorites", "bob_activeListing")));
+    await assertSucceeds(deleteDoc(doc(as(BOB), "favorites", "bob_activeListing")));
+  });
+});
+
+// ---------- reviews ----------
+describe("reviews", () => {
+  test("a verified student can review an active listing", async () => {
+    await assertSucceeds(setDoc(doc(as(BOB), "reviews", "bob_activeListing"), newReview(BOB)));
+  });
+
+  test("a rating alone is enough (the comment is optional)", async () => {
+    const { comment, ...ratingOnly } = newReview(BOB);
+    await assertSucceeds(setDoc(doc(as(BOB), "reviews", "bob_activeListing"), ratingOnly));
+  });
+
+  test("the document ID must be user_id + _ + listing_id", async () => {
+    await assertFails(setDoc(doc(as(BOB), "reviews", "anything"), newReview(BOB)));
+  });
+
+  test("one review per person per listing", async () => {
+    const ref = doc(as(BOB), "reviews", "bob_activeListing");
+    await assertSucceeds(setDoc(ref, newReview(BOB)));
+    await assertFails(setDoc(ref, newReview(BOB, { rating: 1 })));
+  });
+
+  test("rating must be a whole number from 1 to 5", async () => {
+    const ref = doc(as(BOB), "reviews", "bob_activeListing");
+    for (const rating of [0, 6, 3.5, -1, "5"]) {
+      await assertFails(setDoc(ref, newReview(BOB, { rating })));
+    }
+    for (const rating of [1, 3, 5]) {
+      await assertSucceeds(setDoc(ref, newReview(BOB, { rating })));
+      await testEnv.withSecurityRulesDisabled((ctx) => deleteDoc(doc(ctx.firestore(), "reviews", "bob_activeListing")));
+    }
+  });
+
+  test("a comment can be up to 2000 characters, not more", async () => {
+    await assertFails(setDoc(doc(as(BOB), "reviews", "bob_activeListing"),
+      newReview(BOB, { comment: "x".repeat(2001) })));
+    await assertSucceeds(setDoc(doc(as(BOB), "reviews", "bob_activeListing"),
+      newReview(BOB, { comment: "x".repeat(2000) })));
+  });
+
+  test("you cannot review your own listing", async () => {
+    await assertFails(setDoc(doc(as(ALICE), "reviews", "alice_activeListing"), newReview(ALICE)));
+  });
+
+  test("you can only review active listings", async () => {
+    await assertFails(setDoc(doc(as(BOB), "reviews", "bob_hiddenListing"),
+      newReview(BOB, { listing_id: "hiddenListing" })));
+    await assertFails(setDoc(doc(as(BOB), "reviews", "bob_removedListing"),
+      newReview(BOB, { listing_id: "removedListing" })));
+    await assertFails(setDoc(doc(as(BOB), "reviews", "bob_nope"),
+      newReview(BOB, { listing_id: "nope" })));
+  });
+
+  test("business_id must be the listing's business", async () => {
+    await assertFails(setDoc(doc(as(BOB), "reviews", "bob_activeListing"),
+      newReview(BOB, { business_id: "clubOrg" })));
+  });
+
+  test("cannot write a review as someone else", async () => {
+    await assertFails(setDoc(doc(as(BOB), "reviews", "club_activeListing"), newReview(CLUB)));
+  });
+
+  test("cannot add fields that aren't in the data model, or backdate created_at", async () => {
+    await assertFails(setDoc(doc(as(BOB), "reviews", "bob_activeListing"), newReview(BOB, { verified: true })));
+    await assertFails(setDoc(doc(as(BOB), "reviews", "bob_activeListing"),
+      newReview(BOB, { created_at: Timestamp.fromDate(new Date("2020-01-01")) })));
+  });
+
+  test("unverified and non-GSU accounts cannot review", async () => {
+    await assertFails(setDoc(doc(as(BOB, { email_verified: false }), "reviews", "bob_activeListing"), newReview(BOB)));
+    const outsider = { uid: "eve", email: "eve@gmail.com" };
+    await assertFails(setDoc(doc(as(outsider), "reviews", "eve_activeListing"), newReview(outsider)));
+  });
+
+  test("any verified student can read reviews; others cannot", async () => {
+    await seed("reviews", "bob_activeListing", newReview(BOB));
+    await assertSucceeds(getDoc(doc(as(CLUB), "reviews", "bob_activeListing")));
+    await assertSucceeds(getDoc(doc(as(ALICE), "reviews", "bob_activeListing")));
+    await assertFails(getDoc(doc(as(CLUB, { email_verified: false }), "reviews", "bob_activeListing")));
+  });
+
+  test("a listing's reviews can be queried", async () => {
+    await seed("reviews", "bob_activeListing", newReview(BOB));
+    await assertSucceeds(getDocs(query(collection(as(CLUB), "reviews"), where("listing_id", "==", "activeListing"))));
+  });
+
+  test("the author can edit rating and comment (with updated_at)", async () => {
+    await seed("reviews", "bob_activeListing", newReview(BOB));
+    const ref = doc(as(BOB), "reviews", "bob_activeListing");
+    await assertSucceeds(updateDoc(ref, { rating: 3, comment: "Changed my mind.", updated_at: serverTimestamp() }));
+  });
+
+  test("an edit must set updated_at to the server time and keep a valid rating", async () => {
+    await seed("reviews", "bob_activeListing", newReview(BOB));
+    const ref = doc(as(BOB), "reviews", "bob_activeListing");
+    await assertFails(updateDoc(ref, { rating: 3 }));
+    await assertFails(updateDoc(ref, { rating: 9, updated_at: serverTimestamp() }));
+  });
+
+  test("an edit cannot change who wrote it, which listing it is for, or when it was made", async () => {
+    await seed("reviews", "bob_activeListing", newReview(BOB));
+    const ref = doc(as(BOB), "reviews", "bob_activeListing");
+    await assertFails(updateDoc(ref, { user_id: ALICE.uid, updated_at: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { listing_id: "hiddenListing", updated_at: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { business_id: "clubOrg", updated_at: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { created_at: serverTimestamp(), updated_at: serverTimestamp() }));
+  });
+
+  test("someone else cannot edit the review, not even an admin", async () => {
+    await seed("reviews", "bob_activeListing", newReview(BOB));
+    await assertFails(updateDoc(doc(as(ALICE), "reviews", "bob_activeListing"), { rating: 1, updated_at: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as(ADMIN), "reviews", "bob_activeListing"), { rating: 1, updated_at: serverTimestamp() }));
+  });
+
+  test("the author or an admin can delete a review; others cannot", async () => {
+    await seed("reviews", "bob_activeListing", newReview(BOB));
+    await assertFails(deleteDoc(doc(as(ALICE), "reviews", "bob_activeListing")));
+    await assertSucceeds(deleteDoc(doc(as(BOB), "reviews", "bob_activeListing")));
+    await seed("reviews", "bob_activeListing", newReview(BOB));
+    await assertSucceeds(deleteDoc(doc(as(ADMIN), "reviews", "bob_activeListing")));
+  });
+});
+
 // ---------- everything else ----------
 describe("collections without rules yet", () => {
   test("are locked", async () => {
-    await assertFails(setDoc(doc(as(BOB), "reviews", "r1"), { rating: 5 }));
-    await assertFails(getDoc(doc(as(BOB), "favorites", "f1")));
+    await assertFails(setDoc(doc(as(BOB), "reports", "r1"), { reason: "spam" }));
+    await assertFails(getDoc(doc(as(BOB), "rsvps", "r1")));
   });
 });

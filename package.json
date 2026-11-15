@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node --test test/config.test.mjs",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-bento \"node --test test/rules.test.mjs\""
+    "test:rules": "firebase emulators:exec --only firestore --project demo-bento \"node --test firestore.rules.test.mjs\""
   },
   "repository": {
     "type": "git",
