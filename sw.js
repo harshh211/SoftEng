@@ -1,12 +1,21 @@
 // Basic service worker: precache the app shell, network-first for pages,
 // cache-first for static assets. Firebase/Firestore traffic is never cached.
-const CACHE = "bento-shell-v1";
+const CACHE = "bento-shell-v2";
 const SHELL = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
   "/icons/icon-192.png",
-  "/icons/icon-512.png"
+  "/icons/icon-512.png",
+  "/browse.html",
+  "/listing.html",
+  "/css/browse.css",
+  "/js/browse.js",
+  "/js/listing.js",
+  "/js/listing-card.js",
+  "/js/require-user.js",
+  "/js/utils/browse-filters.js",
+  "/js/utils/listing-detail.js"
 ];
 
 self.addEventListener("install", (event) => {
