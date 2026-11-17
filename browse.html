@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Browse · Bento</title>
+  <meta name="theme-color" content="#2f5d50">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/header.css">
+  <link rel="stylesheet" href="css/browse.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main id="main" class="page browse">
+    <h1>Browse</h1>
+
+    <form id="search-form" class="search" role="search">
+      <label class="visually-hidden" for="search-input">Search listings</label>
+      <input id="search-input" name="q" type="search" maxlength="100" autocomplete="off"
+             placeholder="Search listings">
+      <button class="btn" type="submit">Search</button>
+    </form>
+
+    <div class="browse__layout">
+      <button class="btn btn--quiet filters-toggle" type="button" id="filters-toggle"
+              aria-expanded="false" aria-controls="filters">
+        Filters <span class="filters-toggle__count" id="filters-count"></span>
+      </button>
+
+      <form id="filters" class="filters" aria-label="Filters">
+        <div class="field">
+          <label for="category-select">Category</label>
+          <select id="category-select" name="category">
+            <option value="">All categories</option>
+          </select>
+        </div>
+
+        <fieldset class="chips">
+          <legend>Type</legend>
+          <label class="chip"><input type="radio" name="type" value="" checked><span>All</span></label>
+          <label class="chip"><input type="radio" name="type" value="product"><span>Products</span></label>
+          <label class="chip"><input type="radio" name="type" value="service"><span>Services</span></label>
+          <label class="chip"><input type="radio" name="type" value="event"><span>Events</span></label>
+        </fieldset>
+
+        <fieldset class="chips">
+          <legend>Posted by</legend>
+          <label class="chip"><input type="radio" name="by" value="" checked><span>Anyone</span></label>
+          <label class="chip"><input type="radio" name="by" value="business"><span>Businesses</span></label>
+          <label class="chip"><input type="radio" name="by" value="organization"><span>Clubs</span></label>
+        </fieldset>
+
+        <fieldset class="price">
+          <legend>Price</legend>
+          <div class="price__inputs">
+            <label class="visually-hidden" for="min-input">Minimum price in dollars</label>
+            <span class="price__prefix" aria-hidden="true">$</span>
+            <input id="min-input" name="min" type="number" inputmode="decimal" min="0" step="1"
+                   placeholder="Min" aria-describedby="price-error">
+            <span aria-hidden="true">to</span>
+            <label class="visually-hidden" for="max-input">Maximum price in dollars</label>
+            <span class="price__prefix" aria-hidden="true">$</span>
+            <input id="max-input" name="max" type="number" inputmode="decimal" min="0" step="1"
+                   placeholder="Max" aria-describedby="price-error">
+          </div>
+          <p id="price-error" class="field__error"></p>
+        </fieldset>
+
+        <button class="btn btn--quiet btn--small" type="button" id="clear-filters">Clear filters</button>
+      </form>
+
+      <section class="results" aria-labelledby="results-heading">
+        <h2 id="results-heading" class="visually-hidden">Listings</h2>
+        <p id="message" class="status status--error" role="alert"></p>
+        <p id="results-count" class="results__count muted" aria-live="polite"></p>
+
+        <div id="results" class="listing-grid"></div>
+
+        <div id="empty-state" class="empty-state" hidden>
+          <p class="empty-state__title">No listings match.</p>
+          <p class="muted">Try removing a filter.</p>
+          <button class="btn" type="button" id="empty-clear">Clear filters</button>
+        </div>
+
+        <div class="results__more">
+          <button class="btn btn--quiet" type="button" id="load-more" hidden>Load more</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="js/components/header.js"></script>
+  <script type="module" src="js/browse.js"></script>
+</body>
+</html>
