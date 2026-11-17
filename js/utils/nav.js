@@ -1,17 +1,15 @@
 // Pure navigation helpers (no Firebase, no DOM) so they can be unit tested in Node.
 
-// Links every user sees, in display order.
+// Links every user sees, in display order. Profile is the avatar on the right of the header.
+// Round 2 pages: browse.html (Mariam), business-edit.html (Kadie), my-listings.html (Adrian).
 export const BASE_LINKS = [
-  { href: 'index.html', label: 'Discover', icon: 'discover' },
-  { href: 'events.html', label: 'Events', icon: 'events' },
-  { href: 'favorites.html', label: 'Favorites', icon: 'favorites' },
-  { href: 'messages.html', label: 'Messages', icon: 'messages' },
+  { href: 'browse.html', label: 'Browse', icon: 'discover' },
+  { href: 'business-edit.html', label: 'My business', icon: 'business' },
+  { href: 'my-listings.html', label: 'My listings', icon: 'listings' },
 ];
 
 // Extra links by role (FR-1.4: student, business owner, organization, admin).
 export const ROLE_LINKS = {
-  owner: [{ href: 'my-listings.html', label: 'My listings', icon: 'listings' }],
-  organization: [{ href: 'my-events.html', label: 'My events', icon: 'calendar' }],
   admin: [{ href: 'admin-reports.html', label: 'Reports', icon: 'reports' }],
 };
 
@@ -29,7 +27,7 @@ export function getNavLinks(role) {
 
 /**
  * True when a nav link points at the page currently open.
- * "/" and "/bento/" count as index.html.
+ * "/" counts as index.html. Query strings (browse.html?type=event) are ignored.
  */
 export function isActiveLink(href, pathname) {
   const page = (pathname || '/').split('/').pop() || 'index.html';

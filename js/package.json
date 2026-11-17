@@ -1,0 +1,4 @@
+{
+  "//": "Every file in js/ is a browser ES module. This tells Node so the tests can import them.",
+  "type": "module"
+}

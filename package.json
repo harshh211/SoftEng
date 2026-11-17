@@ -4,7 +4,7 @@
   "description": "Your student community, in one place. Bento is a Georgia State University web app for discovering student businesses, clubs, and events. It is built by Team Optic for CSC 4350 Software Engineering.",
   "main": "index.js",
   "scripts": {
-    "test": "node --test test/config.test.mjs",
+    "test": "node --test test/config.test.mjs test/getNavLinks.test.mjs test/validateDisplayName.test.mjs test/browse.test.mjs test/listing-card.test.mjs",
     "test:rules": "firebase emulators:exec --only firestore --project demo-bento \"node --test firestore.rules.test.mjs\""
   },
   "repository": {

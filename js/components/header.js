@@ -5,7 +5,7 @@
 //   <script type="module" src="js/components/header.js"></script>
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
-import { auth, db } from '../firebase.js';
+import { auth, db } from '../firebase-config.js';
 import { getNavLinks, isActiveLink } from '../utils/nav.js';
 import { getInitials } from '../utils/profile.js';
 
@@ -14,6 +14,7 @@ const ICONS = {
   events: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
   favorites: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/>',
   messages: '<path d="M4 5h16v11H9l-5 4Z"/>',
+  business: '<path d="M4 10v10h16V10M3 10l2-6h14l2 6Z"/><path d="M10 20v-5h4v5"/>',
   listings: '<rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="16" height="7" rx="1"/>',
   calendar: '<path d="M12 4v16M4 12h16"/><rect x="4" y="4" width="16" height="16" rx="2"/>',
   reports: '<path d="M5 21V4h11l-2 4 2 4H5"/>',
@@ -49,7 +50,7 @@ export function renderHeader(target, user = null) {
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
       <div class="site-header__inner">
-        <a class="brand" href="index.html" aria-label="Bento home">
+        <a class="brand" href="browse.html" aria-label="Bento home">
           <span class="brand__box" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
           <span class="brand__word">bento</span>
         </a>
