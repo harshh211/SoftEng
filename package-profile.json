@@ -1,0 +1,8 @@
+{
+  "name": "bento",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/validateDisplayName.test.js tests/getNavLinks.test.js"
+  }
+}
