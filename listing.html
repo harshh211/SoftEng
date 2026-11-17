@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Listing · Bento</title>
+  <meta name="theme-color" content="#2f5d50">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/header.css">
+  <link rel="stylesheet" href="css/browse.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main id="main" class="page detail">
+    <a class="back-link" href="browse.html" id="back-link">Back to browse</a>
+
+    <p id="detail-loading" class="muted">Loading listing…</p>
+    <p id="message" class="status status--error" role="alert"></p>
+
+    <article id="detail" class="detail__grid" hidden>
+      <div class="detail__media" id="detail-media"></div>
+
+      <div class="detail__info">
+        <p id="owner-note" class="owner-note" hidden></p>
+
+        <p class="listing-card__meta" id="detail-meta"></p>
+        <h1 id="detail-title" class="detail__title"></h1>
+        <p id="detail-business" class="detail__business" hidden>
+          by <a id="detail-business-link" href="#"></a>
+        </p>
+        <p id="detail-price" class="detail__price"></p>
+
+        <a id="edit-link" class="btn btn--quiet btn--small" href="#" hidden>Edit listing</a>
+
+        <dl class="detail__facts" id="detail-facts"></dl>
+
+        <section aria-labelledby="about-heading" id="about-section" hidden>
+          <h2 id="about-heading">About</h2>
+          <p id="detail-description" class="detail__description"></p>
+        </section>
+
+        <!-- Next round: Favorite, Review and Report buttons go here. -->
+        <div id="listing-actions" class="detail__actions"></div>
+      </div>
+    </article>
+  </main>
+
+  <script type="module" src="js/components/header.js"></script>
+  <script type="module" src="js/listing.js"></script>
+</body>
+</html>
