@@ -11,7 +11,7 @@ import {
   setDoc,
   serverTimestamp,
 } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
-import { auth, db } from './firebase.js';
+import { auth, db } from './firebase-config.js';
 import { validateDisplayName, getInitials } from './utils/profile.js';
 
 const ROLE_LABELS = {
