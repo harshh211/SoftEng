@@ -1,0 +1,187 @@
+/* Business and organization profile pages */
+
+[hidden] { display: none !important; }
+
+.business__grid {
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: 1fr;
+  max-width: 720px;
+}
+
+.panel {
+  background: var(--tray);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+}
+
+.business__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  border-left: 6px solid var(--nori);
+}
+
+.business__logo {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--ginger);
+  color: #3a1d20;
+  font: 700 1.5rem/1 var(--font-display);
+}
+
+.business__name { margin-bottom: var(--space-2); overflow-wrap: anywhere; }
+
+.business__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.role-tag {
+  display: inline-block;
+  padding: 2px var(--space-3);
+  border-radius: 999px;
+  background: var(--rice);
+  border: 1px solid var(--divider);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--sesame);
+}
+
+.business__banner {
+  margin: 0;
+  max-width: none;
+  border-left: 6px solid var(--error);
+  color: var(--error);
+  font-weight: 600;
+}
+
+.business__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.business__description {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.business__details {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+}
+.business__details div { display: flex; gap: var(--space-3); }
+.business__details dt { font-weight: 600; min-width: 5.5rem; }
+.business__details dd { margin: 0; overflow-wrap: anywhere; }
+.business__details div[hidden] { display: none; }
+
+.business-edit form { max-width: 520px; }
+
+.business-edit fieldset {
+  border: 0;
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.business-edit legend { font-weight: 600; margin-bottom: var(--space-2); }
+
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  background: var(--rice);
+  cursor: pointer;
+}
+.choice:has(input:checked) { border-color: var(--nori); box-shadow: inset 4px 0 0 var(--nori); }
+.field .choice input {
+  min-height: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  flex: none;
+  accent-color: var(--nori);
+}
+.choice__title { display: block; font-weight: 600; }
+.choice .field__hint { display: block; margin: 0; }
+
+.field__label { display: block; font-weight: 600; margin-bottom: var(--space-1); }
+
+.field__counter {
+  float: right;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--sesame);
+}
+
+.field select,
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-sm);
+  background: var(--tray);
+  color: var(--ink);
+  font: inherit;
+}
+.field select { min-height: 44px; padding: 0 var(--space-3); }
+.field textarea { min-height: 7rem; padding: var(--space-3); resize: vertical; }
+.field select[aria-invalid='true'],
+.field textarea[aria-invalid='true'] { border-color: var(--error); }
+
+.listing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.simple-card {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  background: var(--rice);
+  color: inherit;
+  text-decoration: none;
+}
+.simple-card:hover { border-color: var(--nori); }
+
+.my-profiles ul { list-style: none; padding: 0; display: grid; gap: 0.5rem; }
+.my-profiles li a {
+  display: block;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--divider, var(--border));
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.button-link {
+  display: inline-block;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.button-link.primary { background: var(--nori, var(--accent)); color: #fff; }
+
+@media (max-width: 480px) {
+  .business__identity { flex-direction: column; align-items: flex-start; }
+  .business__actions .btn { flex: 1; white-space: nowrap; }
+}

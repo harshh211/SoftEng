@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Profile · Bento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/header.css">
+  <link rel="stylesheet" href="css/business.css">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#c2410c">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Bento">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <script type="module" src="js/pwa.js"></script>
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main id="main" class="page business">
+    <p id="business-loading" class="muted">Loading profile…</p>
+    <p id="message" class="status status--error" role="alert"></p>
+
+    <div id="profile" class="business__grid" hidden>
+      <p id="suspended-banner" class="panel business__banner" role="note" hidden>
+        This profile was suspended by an admin and is hidden from other students.
+      </p>
+
+      <section class="panel business__identity" aria-labelledby="name">
+        <div class="business__logo" id="logo" aria-hidden="true">?</div>
+        <div>
+          <h1 id="name" class="business__name"></h1>
+          <p class="business__meta">
+            <span class="role-tag" id="type"></span>
+            <span class="muted" id="category"></span>
+          </p>
+        </div>
+      </section>
+
+      <div id="owner-actions" class="business__actions" hidden>
+        <a class="btn" id="add-listing">Add listing</a>
+        <a class="btn btn--quiet" id="edit-profile">Edit profile</a>
+      </div>
+
+      <section class="panel" id="about" aria-labelledby="about-heading">
+        <h2 id="about-heading">About</h2>
+        <p id="description" class="business__description"></p>
+        <dl class="business__details">
+          <div id="location-row"><dt>Location</dt><dd id="location"></dd></div>
+          <div id="contact-row"><dt>Contact</dt><dd id="contact"></dd></div>
+        </dl>
+      </section>
+
+      <section class="panel" aria-labelledby="listings-heading">
+        <h2 id="listings-heading">Listings</h2>
+        <p id="listings-status" class="muted">Loading listings…</p>
+        <div id="listings" class="listing-grid"></div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="js/components/header.js"></script>
+  <script type="module" src="js/business-page.js"></script>
+</body>
+</html>

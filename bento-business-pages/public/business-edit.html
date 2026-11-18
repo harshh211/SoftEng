@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Create a profile · Bento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/header.css">
+  <link rel="stylesheet" href="css/business.css">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#c2410c">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Bento">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <script type="module" src="js/pwa.js"></script>
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main id="main" class="page business-edit">
+    <h1 id="heading">Create a profile</h1>
+
+    <p id="business-loading" class="muted">Loading…</p>
+    <p id="message" class="status status--error" role="alert"></p>
+
+    <div id="business-content" class="business__grid" hidden>
+      <section class="panel" aria-labelledby="details-heading">
+        <h2 id="details-heading">Profile details</h2>
+
+        <form id="business-form" novalidate>
+          <fieldset id="type-field" class="field">
+            <legend>What are you creating?</legend>
+            <label class="choice">
+              <input type="radio" name="type" value="business" checked>
+              <span>
+                <span class="choice__title">Business</span>
+                <span class="field__hint">Sell products or offer services</span>
+              </span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="type" value="organization">
+              <span>
+                <span class="choice__title">Club / organization</span>
+                <span class="field__hint">Post events and take members</span>
+              </span>
+            </label>
+            <p id="type-error" class="field__error" role="alert"></p>
+          </fieldset>
+
+          <div id="type-fixed" class="field" hidden>
+            <span class="field__label">Type</span>
+            <span class="role-tag" id="type-fixed-value"></span>
+            <p class="field__hint">The type can't be changed after the profile is created.</p>
+          </div>
+
+          <div class="field">
+            <label for="name-input">Name</label>
+            <input id="name-input" name="name" type="text" maxlength="80" required
+                   aria-describedby="name-hint name-error">
+            <p id="name-hint" class="field__hint">Shown on your profile and on every listing.</p>
+            <p id="name-error" class="field__error" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="category-input">Category</label>
+            <select id="category-input" name="category_id" required aria-describedby="category_id-error">
+              <option value="">Choose a category</option>
+            </select>
+            <p id="category_id-error" class="field__error" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="description-input">
+              Description <span class="field__counter counter" data-for="description"></span>
+            </label>
+            <textarea id="description-input" name="description" rows="5" maxlength="2000"
+                      aria-describedby="description-hint description-error"></textarea>
+            <p id="description-hint" class="field__hint">What do you offer, and who is it for?</p>
+            <p id="description-error" class="field__error" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="location-input">Location</label>
+            <input id="location-input" name="location" type="text" maxlength="200"
+                   aria-describedby="location-hint location-error">
+            <p id="location-hint" class="field__hint">For example, Student Center East.</p>
+            <p id="location-error" class="field__error" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="contact-input">Contact info</label>
+            <input id="contact-input" name="contact_info" type="text" maxlength="200"
+                   aria-describedby="contact-hint contact_info-error">
+            <p id="contact-hint" class="field__hint">A handle, email or phone number students can reach you at.</p>
+            <p id="contact_info-error" class="field__error" role="alert"></p>
+          </div>
+
+          <div class="business__actions">
+            <button class="btn" type="submit" id="save">Create profile</button>
+            <a class="btn btn--quiet" id="cancel" href="index.html">Cancel</a>
+          </div>
+          <p id="save-status" class="status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="js/components/header.js"></script>
+  <script type="module" src="js/business-edit.js"></script>
+</body>
+</html>
