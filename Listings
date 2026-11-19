@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bento - Manage Listings</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 1000px; margin: auto; }
+        h1 { margin-bottom: 20px; }
+        .panel { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
+        input, select, textarea, button { width: 100%; padding: 10px; margin-top: 10px; box-sizing: border-box; }
+        textarea { min-height: 100px; resize: vertical; }
+        button { cursor: pointer; }
+        .listing-card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ddd; }
+        .listing-card button { width: auto; margin-right: 8px; }
+        .hidden-listing { opacity: 0.6; }
+        .status { font-weight: bold; }
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Manage Listings</h1>
+    <div class="panel">
+        <label for="businessSelect">Select Business</label>
+        <select id="businessSelect"><option value="">Select a business</option></select>
+        <button id="newListingBtn">Create New Listing</button>
+    </div>
+    <div class="panel" id="formPanel" style="display:none;">
+        <h2 id="formTitle">Create Listing</h2>
+        <form id="listingForm">
+            <input type="hidden" id="listingId">
+            <label for="title">Title</label>
+            <input type="text" id="title" maxlength="100" required>
+            <label for="type">Listing Type</label>
+            <select id="type" required>
+                <option value="product">Product</option>
+                <option value="service">Service</option>
+                <option value="event">Event</option>
+            </select>
+            <label for="category">Category</label>
+            <input type="text" id="category" maxlength="100" required>
+            <label for="price">Price</label>
+            <input type="number" id="price" min="0" step="0.01">
+            <label for="description">Description</label>
+            <textarea id="description" maxlength="2000" required></textarea>
+            <button type="submit">Save Listing</button>
+            <button type="button" id="cancelBtn">Cancel</button>
+        </form>
+    </div>
+    <h2>My Listings</h2>
+    <div id="listingsContainer"></div>
+</div>
+<script type="module" src="./listing_page.js"></script>
+</body>
+</html>
